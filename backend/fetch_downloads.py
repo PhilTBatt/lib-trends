@@ -2,6 +2,7 @@ import os
 import requests
 import pandas as pd
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 PEPY_API_KEY = os.getenv("PEPY_API_KEY")
@@ -14,10 +15,10 @@ def fetch_download_data(language, library):
 
         if response.status_code == 200:
             data = response.json()
-            downloads = data['downloads'].astype(int)
+            downloads = data['downloads']
 
             df = pd.DataFrame.from_dict(downloads, orient='index')
-            df['downloads'] = df.sum(axis=1)
+            df['downloads'] = df.sum(axis=1).astype(int)
             df = df[['downloads']]
             df['library'] = library
             df.index = pd.to_datetime(df.index)
@@ -53,6 +54,7 @@ data_to_fetch = {'python': ['requests', 'numpy', 'pandas', 'matplotlib', 'scikit
 fetch_download_data('python', 'requests')
 
 for language, libraries in data_to_fetch.items():
+    time.sleep(0.005)
     language_data = []
 
     for library in libraries:

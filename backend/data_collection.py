@@ -1,5 +1,11 @@
+import os
 import requests
 import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
+PEPY_API_KEY = os.getenv("PEPY_API_KEY")
+
 
 def fetch_download_data(lang_lib):
 
@@ -10,7 +16,7 @@ def fetch_download_data(lang_lib):
     if langauge == 'python':
 
         url = f'https://api.pepy.tech/api/v2/projects/{library}'
-        headers = {'X-API-Key': 'b6e1f068d19004a37b0bd8fd88f49828'}
+        headers = {'X-API-Key': PEPY_API_KEY}
         response = requests.get(url, headers=headers)
 
         if response.status_code == 200:
@@ -57,7 +63,7 @@ for language in data_to_fetch:
     for library in data_to_fetch[language]:
         data = fetch_download_data({'language': language, 'library': library})
         language_data.append(data)
-        
+
         if data is not None:
             language_data.append(data)
 

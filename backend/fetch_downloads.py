@@ -26,17 +26,18 @@ def fetch_download_data(language, library):
             df['downloads'] = df.sum(axis=1).astype(int)
             df = df[['downloads']]
             df['library'] = library
-            df.index = pd.to_datetime(df.index)
+            df_weekly = df.groupby('library').resample('W').sum(numeric_only=True).reset_index()
+            df_weekly.index = pd.to_datetime(df_weekly.index)
 
-            df = df.sort_index()
-            df = df.rename_axis('date')
+            df_weekly = df_weekly.sort_index()
+            df_weekly = df_weekly.rename_axis('date')
 
             return df
         else:
             print(f"Error fetching data for {library}: {response.status_code}")
         
     elif language == 'javascript':
-        url = f'https://api.npmjs.org/downloads/range/2023-09-13:2025-03-13/{library}'
+        url = f'https://api.npmjs.org/downloads/range/2023-09-15:2025-03-15/{library}'
         response = requests.get(url)
 
         if response.status_code == 200:
@@ -47,10 +48,11 @@ def fetch_download_data(language, library):
             df = df.set_index('day')
             df['library'] = library
             df['downloads'] = df['downloads'].replace(0, pd.NA).ffill().astype('int')
-            df.index = pd.to_datetime(df.index)
+            df_weekly = df.groupby('library').resample('W').sum(numeric_only=True).reset_index()
+            df_weekly.index = pd.to_datetime(df_weekly.index)
 
-            df = df.sort_index()
-            df = df.rename_axis('date')
+            df_weekly = df_weekly.sort_index()
+            df_weekly = df_weekly.rename_axis('date')
 
             return df
         else:

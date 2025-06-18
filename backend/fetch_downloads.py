@@ -7,8 +7,12 @@ import time
 load_dotenv()
 PEPY_API_KEY = os.getenv("PEPY_API_KEY")
 
+pd.set_option('future.no_silent_downcasting', True)
+
 def fetch_download_data(language, library):
     if language == 'python':
+        time.sleep(1.5)
+
         url = f'https://api.pepy.tech/api/v2/projects/{library}'
         headers = {'X-API-Key': PEPY_API_KEY}
         response = requests.get(url, headers=headers)
@@ -18,17 +22,21 @@ def fetch_download_data(language, library):
             downloads = data['downloads']
 
             df = pd.DataFrame.from_dict(downloads, orient='index')
+
             df['downloads'] = df.sum(axis=1).astype(int)
             df = df[['downloads']]
             df['library'] = library
             df.index = pd.to_datetime(df.index)
+
+            df = df.sort_index()
+            df = df.rename_axis('date')
 
             return df
         else:
             print(f"Error fetching data for {library}: {response.status_code}")
         
     elif language == 'javascript':
-        url = f'https://api.npmjs.org/downloads/range/2023-09-12:2025-03-12/{library}'
+        url = f'https://api.npmjs.org/downloads/range/2023-09-13:2025-03-13/{library}'
         response = requests.get(url)
 
         if response.status_code == 200:
@@ -38,10 +46,13 @@ def fetch_download_data(language, library):
             df = pd.DataFrame.from_dict(downloads)
             df = df.set_index('day')
             df['library'] = library
+            df['downloads'] = df['downloads'].replace(0, pd.NA).ffill().astype('int')
             df.index = pd.to_datetime(df.index)
 
+            df = df.sort_index()
+            df = df.rename_axis('date')
+
             return df
-        
         else:
             print(f"Error fetching data for {library}: {response.status_code}")
 
@@ -49,12 +60,11 @@ def fetch_download_data(language, library):
         print(f"Unsupported language: {language}")
 
 data_to_fetch = {'python': ['requests', 'numpy', 'pandas', 'matplotlib', 'scikit-learn', 'flask', 'django', 'tensorflow', 'fastapi', 'pytest'], \
-                 'javascript': ['react', 'express', 'lodash', 'axios', 'vue', 'moment', 'webpack', 'd3', 'redux', 'jquery']}
+                 'javascript': ['react', 'webpack', 'vite', 'jest', 'express', 'vue', '@angular/core', 'jquery', 'next', 'lodash', 'axios', 'moment', 'redux', 'esbuild', 'bootstrap', 'tailwindcss', 'postcss', 'inquirer', 'd3', 'styled-components']}
 
 fetch_download_data('python', 'requests')
 
 for language, libraries in data_to_fetch.items():
-    time.sleep(0.005)
     language_data = []
 
     for library in libraries:
@@ -65,6 +75,6 @@ for language, libraries in data_to_fetch.items():
             language_data.append(data)
 
     language_data_df = pd.concat(language_data)
-    language_data_df.to_csv(f'{language}download_data.csv')
+    language_data_df.to_csv(f'{language}_download_data.csv')
 
-    print(f"Download data saved to '{language}download_data.csv'")
+    print(f"Download data saved to '{language}_download_data.csv'")
